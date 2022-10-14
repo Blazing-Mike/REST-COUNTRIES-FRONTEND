@@ -2,7 +2,7 @@ import Head from "next/head";
 import CountryList from "../components/CountryList";
 import Header from "../components/Header";
 import useFetch from "../hooks/useFetch";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 
 export default function Home() {
@@ -12,8 +12,10 @@ export default function Home() {
     isPending,
     error,
   } = useFetch("https://restcountries.com/v3.1/all");
+
   let [countriesCount, setCountriesCount] = useState(12);
   const [activeBtn, setActiveBtn] = useState(true);
+
 
   const handleLoadMore = () => {
     setActiveBtn(false);
@@ -23,6 +25,7 @@ export default function Home() {
     }, 120);
   };
 
+
   return (
     <div className="prose md:prose-xl dark:prose-dark dark:md:prose-xl-dark">
       <Head>
@@ -31,15 +34,15 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Header setTheme={setTheme} theme={theme} />
-      {error && <div>{error}</div>}
+      <Header setTheme={setTheme} theme={theme}  />
+
       {countries && (
         <CountryList countries={countries} countriesCount={countriesCount} />
       )}
-      <div className="flex justify-center items-center mt-5">
-      {isPending ? (
+      {error ?  <div className="text-center font-semibold text-2xl">{error}</div>  :  isPending ? (
         <div>Loading...</div>
       ) : (
+        <div className="flex justify-center items-center mt-5">
         <button
           type="button"
           className="p-3 rounded-lg border-1 text-sm font-semibold bg-slate-400 my-5"
@@ -47,8 +50,9 @@ export default function Home() {
         >
           Load More
         </button>
+        </div>
       )}
-      </div>
+   
     </div>
   );
 }
