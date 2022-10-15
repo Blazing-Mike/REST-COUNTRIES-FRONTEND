@@ -1,20 +1,41 @@
 import Head from "next/head";
 import CountryList from "../components/CountryList";
 import Header from "../components/Header";
-import useFetch from "../hooks/useFetch";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import {ALL_COUNTRIES, API_COUNTRY_REGION} from '../constants/endpoints'
+import axios from "axios";
 
 export default function Home() {
   const { theme, setTheme } = useTheme();
-  const {
-    data: countries,
-    isPending,
-    error,
-  } = useFetch("https://restcountries.com/v3.1/all");
-
   let [countriesCount, setCountriesCount] = useState(12);
   const [activeBtn, setActiveBtn] = useState(true);
+  const [countries, setCountries] = useState([]);
+  const [isPending, setIsPending] = useState(true);
+const [error, setError] = useState(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [filteredResults, setFilteredResults] = useState([]);
+
+  useEffect(() => {
+    setTimeout(() =>{
+    axios.get(ALL_COUNTRIES).then((response) => {
+      const countries = response.data;
+      setCountries(countries);
+      setIsPending(false);
+      setError(null);
+    }).catch((err) => {
+      if (err.name === 'AbortError') {
+        console.log('fetch aborted')
+      } else {
+        // auto catches network / connection error
+        setIsPending(false);
+        setError(err.message);
+      }
+    });
+    
+  });
+
+  }, []);
 
 
   const handleLoadMore = () => {
@@ -26,6 +47,40 @@ export default function Home() {
   };
 
 
+  const searchCountries = (searchValue) => {
+    setSearchInput(searchValue)
+    if (searchInput !== '') {
+    const filteredCountries  = countries.filter((country) => {
+      return Object.values(country).join(" ").toLowerCase().includes(searchInput.toLowerCase());
+    })
+    console.log(filteredCountries)
+    setFilteredResults(filteredCountries) }
+
+    else {
+      setFilteredResults(countries)
+    }
+  }
+
+
+  const changeRegion = (region) => {
+    axios.get(API_COUNTRY_REGION.replace('{region}', region)).then((response) => {
+      const countries = response.data;
+      console.log(countries)
+      setCountries(countries);
+      setIsPending(false);
+      setError(null);
+    } ).catch((err) => {
+      if (err.name === 'AbortError') {
+        console.log('fetch aborted')
+      } else {
+        setIsPending(false);
+        setError(err.message);
+      }
+    }
+    );
+  }
+
+
   return (
     <div className="prose md:prose-xl dark:prose-dark dark:md:prose-xl-dark">
       <Head>
@@ -34,13 +89,17 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Header setTheme={setTheme} theme={theme}  />
+      <Header setTheme={setTheme} theme={theme}  searchCountries={searchCountries} changeRegion={changeRegion} />
 
-      {countries && (
-        <CountryList countries={countries} countriesCount={countriesCount} />
+      {
+        searchInput.length > 0 ? (
+          <CountryList countries={filteredResults} countriesCount={countriesCount}/>
+        ) : (
+          <CountryList countries={countries} countriesCount={countriesCount}/>
       )}
-      {error ?  <div className="text-center font-semibold text-2xl">{error}</div>  :  isPending ? (
-        <div>Loading...</div>
+
+      {error ?  <div className="text-center font-semibold text-2xl flex items-center justify-center mt-[10%] ">{`${error} : Check your internet connection`}</div>  :  isPending ? (
+        <div className="text-center font-semibold text-2xl flex items-center justify-center mt-[10%] ">Loading...</div>
       ) : (
         <div className="flex justify-center items-center mt-5">
         <button
@@ -52,7 +111,11 @@ export default function Home() {
         </button>
         </div>
       )}
+
+
    
     </div>
   );
 }
+
+

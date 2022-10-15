@@ -19,3 +19,9 @@ a {
   font-family: 'Nunito Sans', sans-serif;
 }
 
+.dropdown{
+  position: absolute; 
+  inset: 0px auto auto 0px; 
+  margin: 0px; 
+  transform: translate3d(0px, 10px, 0px);
+}
